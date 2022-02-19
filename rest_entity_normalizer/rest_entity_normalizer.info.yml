@@ -1,0 +1,12 @@
+name: Rest Entity Nomalizer
+type: module
+description: 'Provides a Normailzer for custom movie entity in JSON format using views'
+package: Custom
+core: 8.x
+core_version_requirement: ^8 || ^9
+dependencies:
+  - drupal:views
+  - drupal:views_ui
+  - drupal:serialization
+  - drupal:rest
+configure: entity.movie.settings
