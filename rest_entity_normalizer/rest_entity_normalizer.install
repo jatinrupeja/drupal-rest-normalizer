@@ -1,0 +1,174 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Rest Enitity Normalizer module.
+ */
+
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\Core\Serialization\Yaml;
+
+/**
+ * Implements hook_install().
+ */
+function rest_entity_normalizer_install() {
+   // Create Genre Vocabulary.
+   $vid = "genre";
+   $name = "Genre";
+   $vocabulary = Vocabulary::load($vid);
+   if (!$vocabulary) {
+     $vocabulary = Vocabulary::create([
+       'vid' => $vid,
+       'description' => 'The Genre for Movies',
+       'name' => $name,
+     ]);
+     $vocabulary->save();
+   }
+ 
+   // Term names to be added.
+   $items = [
+     'Comedy',
+     'Drama',
+     'Action',
+   ];
+   foreach ($items as $item) {
+     if ($terms = taxonomy_term_load_multiple_by_name($item, $vid)) {
+       $term = reset($terms);
+     }
+     else {
+       $term = Term::create([
+         'parent' => [],
+         'name' => $item,
+         'vid' => $vid,
+       ]);
+       $term->save();
+     }
+ 
+   }
+ 
+   // Attach a field to the vocabulary.
+   FieldStorageConfig::create([
+     'field_name' => 'field_genre',
+     'entity_type' => 'movie',
+     'type' => 'entity_reference',
+     'settings' => [
+       'target_type' => 'taxonomy_term',
+     ],
+     'module' => 'core',
+     'locked' => FALSE,
+     'cardinality' => 1,
+   ])->save();
+ 
+   FieldConfig::create([
+     'field_name' => 'field_genre',
+     'entity_type' => 'movie',
+     'bundle' => 'movie',
+     'label' => 'Genre',
+   ])->save();
+ 
+   // Manage form display.
+   $form_display = \Drupal::service('entity_display.repository')->getFormDisplay('movie', 'movie');
+   $form_display = $form_display->setComponent('field_genre', [
+     'type' => 'entity_reference_autocomplete',
+     'weight' => 2,
+   ]);
+   $form_display->save();
+ 
+   // Manage view display.
+   $view_display = \Drupal::service('entity_display.repository')->getViewDisplay('node', 'article');
+   $view_display->setComponent('field_genre', ['type' => 'entity_reference_label']);
+   $view_display->save();
+ 
+   // Create/update View after generating fields.
+   $config_path = drupal_get_path('module', 'rest_entity_normalizer') . '/config/optional';
+   $config_names = [
+     'views.view.movies_data',
+   ];
+ 
+   $config_factory = Drupal::service('config.factory');
+   foreach ($config_names as $config) {
+     $config_data = Yaml::decode(file_get_contents($config_path . '/' . $config . '.yml'));
+     $config = $config_factory->getEditable($config);
+     $config->setData($config_data);
+     $config->save();
+   }
+}
+
+/**
+ * Implements hook_schema().
+ */
+function rest_entity_normalizer_schema() {
+  $schema['rest_entity_normalizer_example'] = [
+    'description' => 'Table description.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique record ID.',
+      ],
+      'uid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The {users}.uid of the user who created the record.',
+      ],
+      'status' => [
+        'description' => 'Boolean indicating whether this record is active.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+      ],
+      'type' => [
+        'type' => 'varchar_ascii',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of the record.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Timestamp when the record was created.',
+      ],
+      'data' => [
+        'type' => 'blob',
+        'not null' => TRUE,
+        'size' => 'big',
+        'description' => 'The arbitrary data for the item.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'type' => ['type'],
+      'uid' => ['uid'],
+      'status' => ['status'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function rest_entity_normalizer_requirements($phase) {
+  $requirements = [];
+
+  if ($phase == 'runtime') {
+    $value = mt_rand(0, 100);
+    $requirements['rest_entity_normalizer_status'] = [
+      'title' => t('Rest Entity Nomalizer Movies Data status'),
+      'value' => t('Rest Entity Nomalizer Movies Data value: @value', ['@value' => $value]),
+      'severity' => $value > 50 ? REQUIREMENT_INFO : REQUIREMENT_WARNING,
+    ];
+  }
+
+  return $requirements;
+}

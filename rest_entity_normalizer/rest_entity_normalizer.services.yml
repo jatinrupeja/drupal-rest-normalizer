@@ -1,0 +1,6 @@
+services:
+  rest_entity_normalizer.normalizer.movie:
+    class: Drupal\rest_entity_normalizer\Normalizer\MovieNormalizer
+    tags:
+      - { name: normalizer, priority: 5 }
+    arguments: ['@entity_type.manager']

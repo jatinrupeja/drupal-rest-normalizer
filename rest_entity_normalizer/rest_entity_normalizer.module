@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * @file
+ * Handles Movies add/edit form validations.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_alter().
+ */
+function rest_entity_normalizer_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+
+  // Add custom validation for release date field in Movies add/edit forms.
+  if ($form_id === 'movie_add_form' || $form_id === 'movie_edit_form') {
+
+    // Option 1: Limit the field to last 60 years till now only -
+    // no future dates.
+    $form['field_release_date']['widget'][0]['value']['#attributes'] = [
+      'min' => date('Y-m-d', strtotime('-60 years')),
+      'max' => date('Y-m-d'),
+    ];
+
+    // Option 2: Add the Drupal Behavior to show error on input
+    // and disable submit until fixed.
+    $form['#attached']['library'][] = 'rest_entity_normalizer/rest_entity_normalizer';
+
+    // Option 3: Validate with custom validation function.
+    $form['#validate'][] = '_movie_add_edit_form_future_date_validator';
+  }
+
+}
+
+/**
+ * Custom validation function for the release date field.
+ */
+function _movie_add_edit_form_future_date_validator(&$form, FormStateInterface $form_state) {
+  $release_date = $form_state->getValue('field_release_date')[0]['value']->getTimestamp();
+
+  if ($release_date > time()) {
+    $form_state->setErrorByName('field_release_date', t('Movie Release date can not be in future. Please check the Release date.'));
+  }
+
+}

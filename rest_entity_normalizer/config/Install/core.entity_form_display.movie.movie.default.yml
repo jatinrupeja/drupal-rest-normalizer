@@ -1,0 +1,31 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.movie.movie.field_release_date
+  module:
+    - datetime
+    - rest_entity_normalizer
+id: movie.movie.default
+targetEntityType: movie
+bundle: movie
+mode: default
+content:
+  field_release_date:
+    type: datetime_default
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true
+  uid: true

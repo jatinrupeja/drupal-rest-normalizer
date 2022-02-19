@@ -1,0 +1,17 @@
+form.movie-form {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+form.movie-form #edit-title-wrapper {
+  width: 23%;
+  padding-right: 10%;
+}
+
+form.movie-form #edit-field-release-date-wrapper {
+  width: 33%;
+}
+
+form.movie-form #edit-field-genre-wrapper {
+  width: 33%;
+}
