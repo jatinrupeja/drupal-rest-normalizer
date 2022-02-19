@@ -1,0 +1,9 @@
+rest_entity_normalizer:
+  version: 1.x
+  css:
+    theme:
+      css/rest_entity_normalizer_form.css: {}
+  js:
+    js/rest_entity_normalizer_form_validator.js: {}
+  dependencies:
+    - core/jquery
